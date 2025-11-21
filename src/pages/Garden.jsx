@@ -380,7 +380,8 @@ export default function Garden() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {shopTab === 'plants' && availableItems.plants.map(plant => {
                 const canAfford = userSeeds >= plant.cost_seeds
-                const alreadyOwned = garden.plants.some(p => p.item_id === plant.id)
+                const ownedCount = garden.plants.filter(p => p.item_id === plant.id).length
+                const atMaxLimit = ownedCount >= 2
                 
                 return (
                   <div
@@ -402,10 +403,27 @@ export default function Garden() {
                           <span className="text-yellow-400 font-semibold">
                             🌱 {plant.cost_seeds} seeds
                           </span>
-                          {alreadyOwned ? (
-                            <span className="text-xs bg-green-500/20 text-green-400 px-3 py-1 rounded">
-                              ✓ Owned
+                          {atMaxLimit ? (
+                            <span className="text-xs bg-slate-700/50 text-slate-400 px-3 py-1 rounded">
+                              Max owned ({ownedCount}/2)
                             </span>
+                          ) : ownedCount > 0 ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">
+                                Owned ({ownedCount}/2)
+                              </span>
+                              <button
+                                onClick={() => handlePurchase(plant)}
+                                disabled={!canAfford}
+                                className={`px-4 py-1 rounded-lg text-sm font-medium transition-colors ${
+                                  canAfford
+                                    ? 'bg-brand-primary hover:bg-brand-primary/80 text-white'
+                                    : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
+                                }`}
+                              >
+                                {canAfford ? 'Buy Another' : 'Not enough seeds'}
+                              </button>
+                            </div>
                           ) : (
                             <button
                               onClick={() => handlePurchase(plant)}

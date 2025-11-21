@@ -1,6 +1,6 @@
 {
   "name": "ecobuddy-backend",
-  "version": "1.5.0",
+  "version": "1.9.0",
   "description": "Backend API for EcoBuddy App",
   "main": "src/server.js",
   "type": "module",

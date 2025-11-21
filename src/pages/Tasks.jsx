@@ -44,10 +44,15 @@ export default function Tasks() {
       
       setLastCompletedDate(lastDate)
       
-      // If it's a new day, reset completed tasks
+      // If it's a new day, reset completed tasks (except bonus tasks which cycle)
       if (lastDate && lastDate !== today) {
+        // Reset only main tasks, not bonus tasks
+        const bonusTaskIds = BONUS_TASKS.map(t => t.id)
+        const previousCompletedTasks = user?.completedTaskIds || []
+        const bonusTasksStillCompleted = previousCompletedTasks.filter(id => bonusTaskIds.includes(id))
+        
         setCompletedTasks(new Set())
-        // Update user's last activity date
+        // Update user's last activity date and reset main tasks
         updateUser({ 
           completedTaskIds: [],
           last_activity_date: today
@@ -63,9 +68,8 @@ export default function Tasks() {
     const mainTasksCompleted = TASK_LIST.every(task => completedTasks.has(task.id))
     
     if (mainTasksCompleted) {
-      // All main tasks done, show bonus tasks that haven't been completed yet
-      const availableBonusTasks = BONUS_TASKS.filter(task => !completedTasks.has(task.id))
-      setAvailableTasks([...TASK_LIST, ...availableBonusTasks])
+      // All main tasks done, show all bonus tasks (they refresh when completed)
+      setAvailableTasks([...TASK_LIST, ...BONUS_TASKS])
     } else {
       // Show only main tasks
       setAvailableTasks(TASK_LIST)
@@ -82,17 +86,40 @@ export default function Tasks() {
       // Add task to completed set
       const newCompletedTasks = new Set(completedTasks)
       newCompletedTasks.add(task.id)
-      setCompletedTasks(newCompletedTasks)
-
-      // Update user seeds and completed tasks
-      const newSeeds = (user.seeds || 0) + task.seeds
-      const today = new Date().toISOString().split('T')[0]
       
-      await updateUser({ 
-        seeds: newSeeds,
-        completedTaskIds: Array.from(newCompletedTasks),
-        last_activity_date: today
-      })
+      // If it's a bonus task, immediately remove it from completed set to allow re-completion
+      const isBonusTask = BONUS_TASKS.some(t => t.id === task.id)
+      if (isBonusTask) {
+        // Don't add bonus tasks to the persistent completed list
+        setCompletedTasks(newCompletedTasks)
+        
+        // Update user seeds only
+        const newSeeds = (user.seeds || 0) + task.seeds
+        const today = new Date().toISOString().split('T')[0]
+        
+        await updateUser({ 
+          seeds: newSeeds,
+          last_activity_date: today
+        })
+        
+        // Clear the bonus task from completed after a short delay to show the animation
+        setTimeout(() => {
+          const resetTasks = new Set(completedTasks)
+          setCompletedTasks(resetTasks)
+        }, 500)
+      } else {
+        // Main task - add to completed and persist
+        setCompletedTasks(newCompletedTasks)
+        
+        const newSeeds = (user.seeds || 0) + task.seeds
+        const today = new Date().toISOString().split('T')[0]
+        
+        await updateUser({ 
+          seeds: newSeeds,
+          completedTaskIds: Array.from(newCompletedTasks),
+          last_activity_date: today
+        })
+      }
 
       // Refresh user to get latest data
       await refreshUser()
@@ -110,10 +137,11 @@ export default function Tasks() {
   if (!user) return null
 
   const mainTasksCompleted = TASK_LIST.filter(task => completedTasks.has(task.id)).length
-  const bonusTasksCompleted = BONUS_TASKS.filter(task => completedTasks.has(task.id)).length
-  const totalCompleted = mainTasksCompleted + bonusTasksCompleted
+  // Bonus tasks don't stay completed, so we don't count them in bonusTasksCompleted
+  const bonusTasksCompleted = 0  // Bonus tasks refresh immediately
+  const totalCompleted = mainTasksCompleted
   const allMainTasksDone = mainTasksCompleted === TASK_LIST.length
-  const totalSeeds = [...TASK_LIST, ...BONUS_TASKS]
+  const totalSeeds = [...TASK_LIST]
     .filter(task => completedTasks.has(task.id))
     .reduce((sum, task) => sum + task.seeds, 0)
 
@@ -153,8 +181,7 @@ export default function Tasks() {
               <div className="flex-1">
                 <h3 className="font-semibold text-white mb-1">Bonus Tasks Unlocked!</h3>
                 <p className="text-sm text-slate-300">
-                  You've completed all main tasks! Here are {BONUS_TASKS.length} bonus tasks that cycle daily.
-                  {bonusTasksCompleted > 0 && ` (${bonusTasksCompleted}/${BONUS_TASKS.length} bonus completed)`}
+                  You've completed all main tasks! Bonus tasks refresh instantly - complete them as many times as you want today!
                 </p>
               </div>
             </div>
@@ -222,7 +249,7 @@ export default function Tasks() {
               <h2 className="text-xl font-semibold text-white mb-3 flex items-center gap-2">
                 <span>🎁</span>
                 <span>Bonus Tasks</span>
-                <span className="text-purple-400 text-sm">(Extra rewards!)</span>
+                <span className="text-purple-400 text-sm">(Refresh instantly!)</span>
               </h2>
               <div className="space-y-3">
                 {BONUS_TASKS.map(task => {
@@ -284,9 +311,9 @@ export default function Tasks() {
         {allMainTasksDone && bonusTasksCompleted === BONUS_TASKS.length && (
           <div className="mt-6 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-xl p-6 text-center">
             <div className="text-5xl mb-3">🏆</div>
-            <h2 className="text-2xl font-bold text-white mb-2">Perfect Day!</h2>
-            <p className="text-slate-300">Amazing! You've completed all tasks including bonuses! You've earned <span className="text-yellow-400 font-bold">{totalSeeds} seeds</span> total today!</p>
-            <p className="text-slate-400 text-sm mt-2">Come back tomorrow for fresh tasks!</p>
+            <h2 className="text-2xl font-bold text-white mb-2">Keep Going!</h2>
+            <p className="text-slate-300">Amazing work! Bonus tasks refresh instantly - keep completing them for more seeds!</p>
+            <p className="text-slate-400 text-sm mt-2">Main tasks will refresh tomorrow at midnight!</p>
           </div>
         )}
       </div>

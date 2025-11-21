@@ -655,6 +655,22 @@ router.post('/garden/purchase',
       );
 
       if (item.item_type === 'plant') {
+        // Check how many of this specific plant type the user already owns
+        const plantCountResult = await client.query(
+          `SELECT COUNT(*) as count FROM user_garden 
+           WHERE user_id = $1 AND item_id = $2 AND is_active = true`,
+          [req.user.userId, itemId]
+        );
+        
+        const plantCount = parseInt(plantCountResult.rows[0].count);
+        if (plantCount >= 2) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({ 
+            error: 'You can only own 2 of each plant type',
+            message: 'You already have the maximum number of this plant'
+          });
+        }
+        
         // Add plant to user's garden
         const gardenResult = await client.query(
           `INSERT INTO user_garden (user_id, item_id, position_x, position_y)
@@ -670,7 +686,33 @@ router.post('/garden/purchase',
           seedsRemaining: currentSeeds - item.cost_seeds
         });
       } else if (item.item_type === 'background') {
-        // Set as active background
+        // Check if user already owns this specific background
+        const backgroundOwnedResult = await client.query(
+          `SELECT COUNT(*) as count FROM user_garden_background ugb
+           WHERE user_id = $1`,
+          [req.user.userId]
+        );
+        
+        // Check if they've ever owned this background (allow switching but not re-buying)
+        const alreadyOwnedResult = await client.query(
+          `SELECT background_id FROM user_garden_background
+           WHERE user_id = $1`,
+          [req.user.userId]
+        );
+        
+        // If user already has a background, check if they own this specific one
+        if (alreadyOwnedResult.rows.length > 0) {
+          const currentBackgroundId = alreadyOwnedResult.rows[0].background_id;
+          if (currentBackgroundId === itemId) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ 
+              error: 'You already own this background',
+              message: 'This background is already active in your garden'
+            });
+          }
+        }
+        
+        // Set as active background (replaces previous, but they can only buy each background once)
         await client.query(
           `INSERT INTO user_garden_background (user_id, background_id)
            VALUES ($1, $2)

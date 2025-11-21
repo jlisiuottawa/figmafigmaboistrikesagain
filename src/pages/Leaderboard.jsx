@@ -7,6 +7,7 @@ export default function Leaderboard() {
   const [leaderboardData, setLeaderboardData] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState('This Month')
+  const [sortBy, setSortBy] = useState('seeds') // 'seeds' or 'streak'
 
   const timeFilters = ['This Week', 'This Month', 'All Time']
 
@@ -26,11 +27,21 @@ export default function Leaderboard() {
     }
   }
 
+  // Sort leaderboard based on selected criteria
+  const sortedLeaderboard = [...leaderboardData].sort((a, b) => {
+    if (sortBy === 'streak') {
+      return (b.streak || 0) - (a.streak || 0)
+    } else {
+      // Sort by seeds (using completed_tasks as a proxy for total seeds earned)
+      return (b.completed_tasks || 0) - (a.completed_tasks || 0)
+    }
+  })
+
   if (!user) return null
 
   // Find current user's rank
-  const userRank = leaderboardData.findIndex(u => u.id === user.id) + 1
-  const currentUser = leaderboardData.find(u => u.id === user.id)
+  const userRank = sortedLeaderboard.findIndex(u => u.id === user.id) + 1
+  const currentUser = sortedLeaderboard.find(u => u.id === user.id)
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#071021] to-[#0e1723] text-slate-100 pb-20">
@@ -58,6 +69,31 @@ export default function Leaderboard() {
           ))}
         </div>
 
+        {/* Sort Options */}
+        <div className="flex gap-2 mb-6">
+          <span className="text-slate-400 text-sm py-2">Sort by:</span>
+          <button
+            onClick={() => setSortBy('seeds')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
+              sortBy === 'seeds'
+                ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50'
+                : 'bg-slate-800/50 text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            🌱 Seeds
+          </button>
+          <button
+            onClick={() => setSortBy('streak')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
+              sortBy === 'streak'
+                ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50'
+                : 'bg-slate-800/50 text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            🔥 Streak
+          </button>
+        </div>
+
         {loading ? (
           <div className="text-center py-12 text-slate-400">
             <div className="text-xl">Loading...</div>
@@ -65,9 +101,9 @@ export default function Leaderboard() {
         ) : (
           <>
             {/* Top 3 Podium */}
-            {leaderboardData.length >= 3 && (
+            {sortedLeaderboard.length >= 3 && (
               <div className="grid grid-cols-3 gap-4 mb-6">
-                {leaderboardData.slice(0, 3).map((person, idx) => {
+                {sortedLeaderboard.slice(0, 3).map((person, idx) => {
                   const accessories = person.accessories ? JSON.parse(person.accessories) : []
                   const rank = idx + 1
                   
@@ -116,14 +152,14 @@ export default function Leaderboard() {
 
             {/* Full Leaderboard List */}
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden">
-              {leaderboardData.length === 0 ? (
+              {sortedLeaderboard.length === 0 ? (
                 <div className="text-center py-12 text-slate-400">
                   <div className="text-5xl mb-4">👥</div>
                   <p className="mb-2">No leaderboard data yet</p>
                   <p className="text-sm">Add friends to see rankings!</p>
                 </div>
               ) : (
-                leaderboardData.map((person, index) => {
+                sortedLeaderboard.map((person, index) => {
                   const isCurrentUser = person.id === user.id
                   const rank = index + 1
                   const accessories = person.accessories ? JSON.parse(person.accessories) : []

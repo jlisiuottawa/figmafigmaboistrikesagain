@@ -77,7 +77,7 @@ app.use('/api/user', userRoutes);
 app.get('/', (req, res) => {
   res.json({
     name: 'Energy Teen API',
-    version: '1.5.0',
+    version: '1.9.0',
     status: 'running',
     message: 'API is operational. Use /api/health for detailed health check.',
     endpoints: {

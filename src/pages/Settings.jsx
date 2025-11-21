@@ -15,6 +15,7 @@ export default function Settings() {
   const [loadingSurvey, setLoadingSurvey] = useState(true)
   const [notificationPermission, setNotificationPermission] = useState('default')
   const [testingNotification, setTestingNotification] = useState(false)
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false)
 
   useEffect(() => {
     loadSurvey()
@@ -346,7 +347,10 @@ export default function Settings() {
               </div>
             </button>
 
-            <button className="w-full p-4 border-b border-slate-700/50 text-left hover:bg-slate-700/30 transition-colors">
+            <button 
+              onClick={() => setShowPrivacyPolicy(true)}
+              className="w-full p-4 border-b border-slate-700/50 text-left hover:bg-slate-700/30 transition-colors"
+            >
               <div className="flex items-center justify-between">
                 <div className="font-medium text-white">Privacy Policy</div>
                 <span className="text-slate-400">→</span>
@@ -356,7 +360,7 @@ export default function Settings() {
             <div className="p-4 text-left">
               <div className="flex items-center justify-between">
                 <div className="font-medium text-white">Version</div>
-                <div className="text-sm text-slate-400">1.0.0</div>
+                <div className="text-sm text-slate-400">1.9.0</div>
               </div>
             </div>
           </div>
@@ -385,6 +389,37 @@ export default function Settings() {
           </div>
         </div>
       </div>
+
+      {/* Privacy Policy Modal */}
+      {showPrivacyPolicy && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto border border-slate-700">
+            <div className="sticky top-0 bg-slate-800 border-b border-slate-700 p-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-white">Privacy Policy</h2>
+              <button
+                onClick={() => setShowPrivacyPolicy(false)}
+                className="text-slate-400 hover:text-white transition-colors text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-slate-200 text-lg leading-relaxed">
+                We use your information to give you personalized energy saving stats and tips. 
+                Your information is never shared with any third parties.
+              </p>
+            </div>
+            <div className="sticky bottom-0 bg-slate-800 border-t border-slate-700 p-6">
+              <button
+                onClick={() => setShowPrivacyPolicy(false)}
+                className="w-full bg-brand-primary hover:bg-brand-primary/80 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
