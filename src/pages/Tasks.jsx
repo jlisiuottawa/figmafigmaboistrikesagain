@@ -85,10 +85,10 @@ export default function Tasks() {
       // If it's a bonus task, immediately remove it from completed set to allow re-completion
       const isBonusTask = BONUS_TASKS.some(t => t.id === task.id)
       if (isBonusTask) {
-        // Don't add bonus tasks to the persistent completed list
+        // Temporarily show the task as completed
         setCompletedTasks(newCompletedTasks)
         
-        // Update user seeds only
+        // Update user seeds only (don't persist bonus tasks in completedTaskIds)
         const newSeeds = (user.seeds || 0) + task.seeds
         const today = new Date().toISOString().split('T')[0]
         
@@ -99,8 +99,11 @@ export default function Tasks() {
         
         // Clear the bonus task from completed after a short delay to show the animation
         setTimeout(() => {
-          const resetTasks = new Set(completedTasks)
-          setCompletedTasks(resetTasks)
+          setCompletedTasks(prevTasks => {
+            const resetTasks = new Set(prevTasks)
+            resetTasks.delete(task.id)
+            return resetTasks
+          })
         }, 500)
       } else {
         // Main task - add to completed and persist
@@ -132,8 +135,6 @@ export default function Tasks() {
   if (!user) return null
 
   const mainTasksCompleted = TASK_LIST.filter(task => completedTasks.has(task.id)).length
-  // Bonus tasks don't stay completed, so we don't count them in bonusTasksCompleted
-  const bonusTasksCompleted = 0  // Bonus tasks refresh immediately
   const totalCompleted = mainTasksCompleted
   const allMainTasksDone = mainTasksCompleted === TASK_LIST.length
   const totalSeeds = [...TASK_LIST]
@@ -295,19 +296,11 @@ export default function Tasks() {
         </div>
 
         {/* Completion Messages */}
-        {allMainTasksDone && bonusTasksCompleted === 0 && (
+        {allMainTasksDone && (
           <div className="mt-6 bg-gradient-to-r from-green-500/20 to-brand-primary/20 border border-green-500/30 rounded-xl p-6 text-center">
             <div className="text-5xl mb-3">🎉</div>
             <h2 className="text-2xl font-bold text-white mb-2">All Main Tasks Completed!</h2>
-            <p className="text-slate-300">Great job! You've earned seeds. Check out the bonus tasks above for more rewards!</p>
-          </div>
-        )}
-        
-        {allMainTasksDone && bonusTasksCompleted === BONUS_TASKS.length && (
-          <div className="mt-6 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-xl p-6 text-center">
-            <div className="text-5xl mb-3">🏆</div>
-            <h2 className="text-2xl font-bold text-white mb-2">Keep Going!</h2>
-            <p className="text-slate-300">Amazing work! Bonus tasks refresh instantly - keep completing them for more seeds!</p>
+            <p className="text-slate-300">Great job! You've earned seeds. Check out the bonus tasks above for unlimited extra rewards!</p>
             <p className="text-slate-400 text-sm mt-2">Main tasks will refresh tomorrow at midnight!</p>
           </div>
         )}
