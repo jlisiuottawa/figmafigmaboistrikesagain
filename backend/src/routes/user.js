@@ -687,20 +687,13 @@ router.post('/garden/purchase',
         });
       } else if (item.item_type === 'background') {
         // Check if user already owns this specific background
-        const backgroundOwnedResult = await client.query(
-          `SELECT COUNT(*) as count FROM user_garden_background ugb
-           WHERE user_id = $1`,
-          [req.user.userId]
-        );
-        
-        // Check if they've ever owned this background (allow switching but not re-buying)
         const alreadyOwnedResult = await client.query(
           `SELECT background_id FROM user_garden_background
            WHERE user_id = $1`,
           [req.user.userId]
         );
         
-        // If user already has a background, check if they own this specific one
+        // If user already has this specific background, don't allow re-purchase
         if (alreadyOwnedResult.rows.length > 0) {
           const currentBackgroundId = alreadyOwnedResult.rows[0].background_id;
           if (currentBackgroundId === itemId) {
@@ -712,7 +705,7 @@ router.post('/garden/purchase',
           }
         }
         
-        // Set as active background (replaces previous, but they can only buy each background once)
+        // Set as active background (replaces previous if switching to a new one)
         await client.query(
           `INSERT INTO user_garden_background (user_id, background_id)
            VALUES ($1, $2)

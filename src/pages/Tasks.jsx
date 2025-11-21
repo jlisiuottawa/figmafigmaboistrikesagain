@@ -44,13 +44,8 @@ export default function Tasks() {
       
       setLastCompletedDate(lastDate)
       
-      // If it's a new day, reset completed tasks (except bonus tasks which cycle)
+      // If it's a new day, reset completed tasks (main tasks only)
       if (lastDate && lastDate !== today) {
-        // Reset only main tasks, not bonus tasks
-        const bonusTaskIds = BONUS_TASKS.map(t => t.id)
-        const previousCompletedTasks = user?.completedTaskIds || []
-        const bonusTasksStillCompleted = previousCompletedTasks.filter(id => bonusTaskIds.includes(id))
-        
         setCompletedTasks(new Set())
         // Update user's last activity date and reset main tasks
         updateUser({ 
