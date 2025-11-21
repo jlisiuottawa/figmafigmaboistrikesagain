@@ -1,4 +1,4 @@
-# EcoBuddy — Your Energy Saving Companion (v1.5)
+# EcoBuddy — Your Energy Saving Companion (v1.9)
 
 This repository contains EcoBuddy, a full-featured energy-saving dashboard app with:
 - React + Vite (Frontend)
@@ -11,7 +11,7 @@ This repository contains EcoBuddy, a full-featured energy-saving dashboard app w
 - **Streak Tracking**
 - **Friends & Social Features**
 
-## Features (v1.5)
+## Features (v1.9)
 
 ### 📊 Analytics Page
 - Real-time energy usage tracking based on completed tasks
