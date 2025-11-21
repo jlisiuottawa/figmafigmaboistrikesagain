@@ -165,7 +165,7 @@ export default function Tasks() {
           <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 text-center">
             <div className="text-2xl mb-1">🌱</div>
             <div className="text-2xl font-bold text-yellow-400">{totalSeeds}</div>
-            <div className="text-xs text-slate-400">Seeds Earned</div>
+            <div className="text-xs text-slate-400">From Main Tasks</div>
           </div>
         </div>
 
